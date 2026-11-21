@@ -81,7 +81,7 @@ class MainActivity : Activity() {
         liste.removeAllViews()
         val appareils = Pixoo.appareils(this)
         if (appareils.isEmpty()) { statut.text = "Aucun appareil associé. Associe le cadre dans les réglages Bluetooth."; return }
-        for (d in appareils) liste.addView(bouton((if (Pixoo.ressembleAUnCadre(d)) "🟦 " else "") + nom(d)) { choisir(d.address) })
+        for (d in appareils) liste.addView(bouton((if (Pixoo.ressembleAUnCadre(d)) "🟦 " else "") + nom(d) + "\n" + d.address) { choisir(d.address) })
     }
 
     private fun choisir(adresse: String) {
@@ -93,9 +93,10 @@ class MainActivity : Activity() {
             echapper = prefs.getBoolean("echapper", false)
             quandEtat = { e ->
                 statut.text = when (e) {
-                    Pixoo.Etat.RELIE -> "✅ Relié au cadre"
+                    Pixoo.Etat.RELIE -> "✅ Relié au cadre ($adresse, ${methode})"
                     Pixoo.Etat.CONNEXION -> "Connexion au cadre…"
-                    Pixoo.Etat.DECONNECTE -> "❌ Pas relié : cadre allumé et près du téléphone ? Nouvel essai dans 3 s…"
+                    Pixoo.Etat.DECONNECTE -> "❌ Pas relié à $adresse. Nouvel essai dans 3 s…" +
+                        (derniereErreur?.let { "\n\nCe que dit le téléphone :\n$it" } ?: "")
                 }
             }
             relier()

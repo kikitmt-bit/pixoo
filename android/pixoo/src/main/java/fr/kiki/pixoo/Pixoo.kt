@@ -34,6 +34,12 @@ class Pixoo(context: Context, val adresse: String) {
 
     @Volatile var etat = Etat.DECONNECTE
         private set
+    /** Pourquoi la dernière connexion a échoué (une ligne par façon essayée), pour le diagnostic. */
+    @Volatile var derniereErreur: String? = null
+        private set
+    /** La façon de se relier qui a marché. */
+    @Volatile var methode: String? = null
+        private set
 
     private val adaptateur = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
     private val fil = Executors.newSingleThreadExecutor()
@@ -105,13 +111,30 @@ class Pixoo(context: Context, val adresse: String) {
         changer(Etat.CONNEXION)
         val appareil = adaptateur?.getRemoteDevice(adresse) ?: throw IOException("pas de Bluetooth")
         adaptateur.cancelDiscovery()
-        val p = try {
-            appareil.createRfcommSocketToServiceRecord(SPP).also { it.connect() }
-        } catch (e: IOException) {
-            // certains cadres ne publient pas le service : on essaie directement le canal 1, comme pixoo-client
-            val m = appareil.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
-            (m.invoke(appareil, 1) as BluetoothSocket).also { it.connect() }
+        // plusieurs façons de se relier : selon les cadres et les téléphones, une seule marche
+        val essais = listOf<Pair<String, () -> BluetoothSocket>>(
+            "SPP" to { appareil.createRfcommSocketToServiceRecord(SPP) },
+            "SPP sans sécurité" to { appareil.createInsecureRfcommSocketToServiceRecord(SPP) },
+            "canal 1" to { canal(appareil, "createRfcommSocket", 1) },
+            "canal 1 sans sécurité" to { canal(appareil, "createInsecureRfcommSocket", 1) },
+            "canal 2" to { canal(appareil, "createRfcommSocket", 2) },
+        )
+        var p: BluetoothSocket? = null
+        val erreurs = ArrayList<String>()
+        for ((nom, creer) in essais) {
+            var s: BluetoothSocket? = null
+            try {
+                s = creer(); s.connect(); p = s; methode = nom; break
+            } catch (e: Exception) {
+                try { s?.close() } catch (_: IOException) {}
+                erreurs.add("$nom : ${(e.cause ?: e).message ?: e.javaClass.simpleName}")
+            }
         }
+        if (p == null) {
+            derniereErreur = erreurs.joinToString("\n")
+            throw IOException(derniereErreur)
+        }
+        derniereErreur = null
         Thread.sleep(1_000)  // le cadre veut au moins 1 s avant le premier message
         prise = p
         dejaEnvoye = null
@@ -119,6 +142,9 @@ class Pixoo(context: Context, val adresse: String) {
         changer(Etat.RELIE)
         return p
     }
+
+    private fun canal(d: BluetoothDevice, fonction: String, n: Int): BluetoothSocket =
+        d.javaClass.getMethod(fonction, Int::class.javaPrimitiveType).invoke(d, n) as BluetoothSocket
 
     private fun ecrire(p: BluetoothSocket, octets: ByteArray) {
         p.outputStream.write(octets)
