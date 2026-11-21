@@ -1,6 +1,6 @@
 package fr.kiki.pixoo
 
-/** Petite police de 3 pixels de large sur 5 de haut (chiffres, quelques lettres et signes), avec 1 pixel d'écart.
+/** Petite police de 3 pixels de large sur 5 de haut (chiffres, lettres A-Z sans accents, quelques signes), avec 1 pixel d'écart.
  *  Sur 16 pixels, on loge par exemple « 40 » et « 15 » côte à côte. `echelle` = 2 double tout (6 × 10). */
 object Police {
     const val LARGEUR = 3
@@ -25,12 +25,24 @@ object Police {
         'I' to listOf("###", ".#.", ".#.", ".#.", "###"),
         'J' to listOf("..#", "..#", "..#", "#.#", "###"),
         'K' to listOf("#.#", "#.#", "##.", "#.#", "#.#"),
-        'N' to listOf("#.#", "###", "###", "#.#", "#.#"),
+        'N' to listOf("##.", "#.#", "#.#", "#.#", "#.#"),
         'O' to listOf("###", "#.#", "#.#", "#.#", "###"),
         'P' to listOf("###", "#.#", "###", "#..", "#.."),
         'S' to listOf("###", "#..", "###", "..#", "###"),
         'T' to listOf("###", ".#.", ".#.", ".#.", ".#."),
         'U' to listOf("#.#", "#.#", "#.#", "#.#", "###"),
+        'B' to listOf("##.", "#.#", "##.", "#.#", "##."),
+        'C' to listOf("###", "#..", "#..", "#..", "###"),
+        'G' to listOf("###", "#..", "#.#", "#.#", "###"),
+        'H' to listOf("#.#", "#.#", "###", "#.#", "#.#"),
+        'L' to listOf("#..", "#..", "#..", "#..", "###"),
+        'M' to listOf("#.#", "###", "#.#", "#.#", "#.#"),
+        'Q' to listOf("###", "#.#", "#.#", "###", "..#"),
+        'R' to listOf("##.", "#.#", "##.", "#.#", "#.#"),
+        'W' to listOf("#.#", "#.#", "###", "###", "#.#"),
+        'X' to listOf("#.#", "#.#", ".#.", "#.#", "#.#"),
+        'Y' to listOf("#.#", "#.#", ".#.", ".#.", ".#."),
+        'Z' to listOf("###", "..#", ".#.", "#..", "###"),
         '-' to listOf("...", "...", "###", "...", "..."),
         ':' to listOf("...", ".#.", "...", ".#.", "..."),
         ' ' to listOf("...", "...", "...", "...", "..."),
