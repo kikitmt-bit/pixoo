@@ -24,7 +24,7 @@ import fr.kiki.pixoo.Pixoo
 class MainActivity : Activity() {
     private var cadre: Pixoo? = null
     private var lum = 60
-    private lateinit var etat: TextView
+    private lateinit var statut: TextView
     private lateinit var liste: LinearLayout
     private lateinit var essais: LinearLayout
     private val prefs by lazy { getSharedPreferences("pixoo", MODE_PRIVATE) }
@@ -36,8 +36,8 @@ class MainActivity : Activity() {
         val page = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(40, 60, 40, 60) }
         page.addView(texte("Pixoo essai", 26f))
         page.addView(texte("1. Associe d'abord le cadre dans les réglages Bluetooth du téléphone.\n2. Touche-le ci-dessous.", 15f))
-        etat = texte("", 17f).apply { setPadding(0, 30, 0, 30) }
-        page.addView(etat)
+        statut = texte("", 17f).apply { setPadding(0, 30, 0, 30) }
+        page.addView(statut)
         liste = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         page.addView(liste)
         page.addView(bouton("↻ Revoir la liste") { remplirListe() })
@@ -69,7 +69,7 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(code: Int, permissions: Array<out String>, resultats: IntArray) {
         if (resultats.firstOrNull() == PackageManager.PERMISSION_GRANTED) demarrer()
-        else etat.text = "Il faut autoriser « Appareils à proximité » pour parler au cadre (Réglages → Applis → Pixoo essai)."
+        else statut.text = "Il faut autoriser « Appareils à proximité » pour parler au cadre (Réglages → Applis → Pixoo essai)."
     }
 
     private fun demarrer() {
@@ -80,7 +80,7 @@ class MainActivity : Activity() {
     private fun remplirListe() {
         liste.removeAllViews()
         val appareils = Pixoo.appareils(this)
-        if (appareils.isEmpty()) { etat.text = "Aucun appareil associé. Associe le cadre dans les réglages Bluetooth."; return }
+        if (appareils.isEmpty()) { statut.text = "Aucun appareil associé. Associe le cadre dans les réglages Bluetooth."; return }
         for (d in appareils) liste.addView(bouton((if (Pixoo.ressembleAUnCadre(d)) "🟦 " else "") + nom(d)) { choisir(d.address) })
     }
 
@@ -88,11 +88,11 @@ class MainActivity : Activity() {
         arreterCompteur()
         cadre?.fermer()
         prefs.edit().putString("adresse", adresse).apply()
-        etat.text = "Connexion au cadre…"
+        statut.text = "Connexion au cadre…"
         cadre = Pixoo(this, adresse).apply {
             echapper = prefs.getBoolean("echapper", false)
             quandEtat = { e ->
-                etat.text = when (e) {
+                statut.text = when (e) {
                     Pixoo.Etat.RELIE -> "✅ Relié au cadre"
                     Pixoo.Etat.CONNEXION -> "Connexion au cadre…"
                     Pixoo.Etat.DECONNECTE -> "❌ Pas relié : cadre allumé et près du téléphone ? Nouvel essai dans 3 s…"
