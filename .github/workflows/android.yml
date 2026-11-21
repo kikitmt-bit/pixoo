@@ -1,0 +1,60 @@
+# Teste la brique Pixoo puis fabrique l'appli « Pixoo essai » à chaque modification du dossier android/.
+# Le fichier pixoo-essai.apk est déposé dans la page « Releases » du dépôt (version « essai »), à installer sur le téléphone.
+
+name: Appli Pixoo
+
+on:
+  push:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      # les octets envoyés au cadre comparés à ceux de pixoo-client ; rouge = pas d'APK
+      - name: Tester la brique
+        run: gradle --no-daemon :pixoo:testReleaseUnitTest
+
+      - name: Fabriquer l'appli d'essai
+        run: |
+          gradle --no-daemon :essai:assembleRelease
+          cp essai/build/outputs/apk/release/essai-release.apk pixoo-essai.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pixoo-essai
+          path: android/pixoo-essai.apk
+
+      - name: Déposer dans les Releases (version « essai »)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Appli Pixoo essai, version ${GITHUB_RUN_NUMBER} ($(date -u +%d/%m/%Y))."
+          gh release view essai >/dev/null 2>&1 || gh release create essai --title "Pixoo essai" --notes "$NOTES" --target "$GITHUB_SHA"
+          gh release edit essai --notes "$NOTES"
+          gh release upload essai pixoo-essai.apk --clobber
