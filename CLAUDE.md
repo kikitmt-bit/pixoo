@@ -15,4 +15,6 @@ téléphone servant de relais (il lit le score dans Firebase, `/live/<clé>.json
 - Fabrication : GitHub Actions (`android.yml`) : tests puis `pixoo-essai.apk` dans la Release « essai ».
   Pas de SDK Android dans le cloud : les parties pures se testent dans un petit projet Kotlin JVM (copier
   `Image16`, `Police`, `Protocole` et le test). Signature : `android/pixoo.keystore` (mot de passe dans `essai/build.gradle.kts`).
-- **Pas encore essayé sur le vrai cadre** (le cloud ne joint pas le Bluetooth).
+- **Marche sur le vrai cadre de Kiki (21/11/2026)**, une seule entrée « Pixoo » après dissociation et réassociation. Piège corrigé :
+  `cancelDiscovery()` demande BLUETOOTH_SCAN sur Android 12+ (SecurityException avant toute connexion) : toujours dans un try.
+  Le cloud ne joint pas le Bluetooth : chaque essai passe par Kiki et la capture de l'appli d'essai (adresse, façon qui a marché, erreurs).
