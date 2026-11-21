@@ -101,6 +101,7 @@ class Pixoo(context: Context, val adresse: String) {
                     dejaEnvoye = quoi
                 }
             } catch (e: Exception) {
+                if (etat != Etat.RELIE && derniereErreur == null) derniereErreur = e.toString()  // toute erreur se voit à l'écran
                 couper()
                 if (ouvert) { principal.removeCallbacks(reessai); principal.postDelayed(reessai, 3_000) }
             }
@@ -109,8 +110,10 @@ class Pixoo(context: Context, val adresse: String) {
 
     private fun brancher(): BluetoothSocket {
         changer(Etat.CONNEXION)
+        derniereErreur = null
         val appareil = adaptateur?.getRemoteDevice(adresse) ?: throw IOException("pas de Bluetooth")
-        adaptateur.cancelDiscovery()
+        // arrêter une recherche en cours demande BLUETOOTH_SCAN sur Android 12+ : on essaie, sans s'arrêter si c'est refusé
+        try { adaptateur.cancelDiscovery() } catch (_: SecurityException) {}
         // plusieurs façons de se relier : selon les cadres et les téléphones, une seule marche
         val essais = listOf<Pair<String, () -> BluetoothSocket>>(
             "SPP" to { appareil.createRfcommSocketToServiceRecord(SPP) },
@@ -134,7 +137,6 @@ class Pixoo(context: Context, val adresse: String) {
             derniereErreur = erreurs.joinToString("\n")
             throw IOException(derniereErreur)
         }
-        derniereErreur = null
         Thread.sleep(1_000)  // le cadre veut au moins 1 s avant le premier message
         prise = p
         dejaEnvoye = null
